@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id          String    @id @default(uuid())
+  type        LeadType
+  stage       LeadStage
+  name        String
+  company     String?
+  phone       String?
+  email       String?
+  region_id   String?
+  source      String?
+  priority    LeadPriority @default(normal)
+  created_at  DateTime @default(now())
+  quiz        Quiz?
+  files       File[]
+  region      Region? @relation(fields: [region_id], references: [id])
+}
+
+model Quiz {
+  id                 String   @id @default(uuid())
+  lead_id            String   @unique
+  object_type        String?
+  contamination      String?
+  urgency            Urgency?
+  recommended_method String?
+  risk_level         String?
+  completed_at       DateTime?
+  lead               Lead     @relation(fields: [lead_id], references: [id])
+}
+
+model File {
+  id         String   @id @default(uuid())
+  lead_id    String
+  type       FileType
+  url        String
+  expires_at DateTime?
+  size       Int?
+  created_at DateTime @default(now())
+  lead       Lead     @relation(fields: [lead_id], references: [id])
+}
+
+model Region {
+  id           String   @id @default(uuid())
+  city         String
+  phone        String?
+  email        String?
+  manager_name String?
+  sla          String?
+  leads        Lead[]
+  contents     Content[]
+  users        User[]
+}
+
+model Content {
+  id         String   @id @default(uuid())
+  type       ContentType
+  title      String
+  slug       String   @unique
+  body       String
+  region_id  String?
+  published  Boolean  @default(false)
+  region     Region?  @relation(fields: [region_id], references: [id])
+}
+
+model User {
+  id         String   @id @default(uuid())
+  role       UserRole
+  region_id  String?
+  email      String   @unique
+  active     Boolean  @default(true)
+  region     Region?  @relation(fields: [region_id], references: [id])
+}
+
+enum LeadType {
+  tender
+  inspection
+  quiz
+  checklist
+  chat
+}
+
+enum LeadStage {
+  new
+  qualified
+  inspection
+  offer
+  won
+  lost
+}
+
+enum LeadPriority {
+  normal
+  high
+}
+
+enum FileType {
+  photo
+  video
+  tz
+}
+
+enum Urgency {
+  low
+  medium
+  high
+}
+
+enum ContentType {
+  service
+  case
+  blog
+}
+
+enum UserRole {
+  admin
+  manager
+  editor
+}
